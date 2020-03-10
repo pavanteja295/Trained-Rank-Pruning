@@ -209,49 +209,49 @@ def main():
         test_loss, test_acc = test(testloader, model, criterion, start_epoch, use_cuda)
         print(' Test Loss:  %.8f, Test Acc:  %.2f' % (test_loss, test_acc))
 
-	if DEBUG:
-		# print(model)
-		show_low_rank(model, input_size=[32, 32])
+    if DEBUG:
+       # print(model)
+        show_low_rank(model, input_size=[32, 32])
 
-	print(' Start decomposition:')
-	look_up_table = get_look_up_table(model)
+    print(' Start decomposition:')
+    look_up_table = get_look_up_table(model)
 	#print(model)
-        thresholds = [0.85]#+0.03*x for x in range(10)]
-        T = np.array(thresholds)
-        cr = np.zeros(T.shape)
-        acc = np.zeros(T.shape)
-        
-        model_path = 'net.pth'
-        torch.save(model, model_path)
+    thresholds = [0.85]#+0.03*x for x in range(10)]
+    T = np.array(thresholds)
+    cr = np.zeros(T.shape)
+    acc = np.zeros(T.shape)
+    
+    model_path = 'net.pth'
+    torch.save(model, model_path)
 
-        for i, t in enumerate(thresholds):
-            test_model = torch.load(model_path)        
+    for i, t in enumerate(thresholds):
+        test_model = torch.load(model_path)        
 
-            cr[i] = show_low_rank(test_model, input_size=[32, 32], criterion=EnergyThreshold(t))
-	    test_model = f_decouple(test_model, look_up_table,
+        cr[i] = show_low_rank(test_model, input_size=[32, 32], criterion=EnergyThreshold(t))
+        test_model = f_decouple(test_model, look_up_table,
                     criterion=EnergyThreshold(t),train=False)
 	    #print(model)
-	    print(' Done! test decoupled model')
-	    test_loss, test_acc = test(testloader, test_model, criterion, start_epoch, use_cuda)
-            print(' Test Loss :  %.8f, Test Acc:  %.2f' % (test_loss, test_acc))
-            acc[i] = test_acc
+        print(' Done! test decoupled model')
+        test_loss, test_acc = test(testloader, test_model, criterion, start_epoch, use_cuda)
+        print(' Test Loss :  %.8f, Test Acc:  %.2f' % (test_loss, test_acc))
+        acc[i] = test_acc
 	    
-            if args.retrain:
-            # retrain model
-                print(' Retrain decoupled model')
-                finetune_epoch = 4
-                args.schedule = [int(finetune_epoch/2), finetune_epoch]
-                best_acc = 0.0
-                optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,weight_decay=args.weight_decay)
-                global state
-                init_lr = args.lr
-                state['lr'] = init_lr
+        if args.retrain:
+        # retrain model
+            print(' Retrain decoupled model')
+            finetune_epoch = 4
+            args.schedule = [int(finetune_epoch/2), finetune_epoch]
+            best_acc = 0.0
+            optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum,weight_decay=args.weight_decay)
+            global state
+            init_lr = args.lr
+            state['lr'] = init_lr
 
-                for epoch in range(finetune_epoch):
-                    adjust_learning_rate(optimizer, epoch)
-                    train_loss, train_acc = train(trainloader, test_model, criterion, optimizer, epoch, use_cuda)
-                    test_loss, test_acc = test(testloader, test_model, criterion, epoch, use_cuda)
-                    best_acc = max(test_acc, best_acc)
+            for epoch in range(finetune_epoch):
+                adjust_learning_rate(optimizer, epoch)
+                train_loss, train_acc = train(trainloader, test_model, criterion, optimizer, epoch, use_cuda)
+                test_loss, test_acc = test(testloader, test_model, criterion, epoch, use_cuda)
+                best_acc = max(test_acc, best_acc)
 
                     # append logger file
                     # logger.append([state['lr'], train_loss, test_loss, train_acc, test_acc])
@@ -260,13 +260,13 @@ def main():
                 #logger.plot()
 		#savefig(os.path.join(args.checkpoint, 'log.eps'))
 
-	        acc[i] = best_acc
+            acc[i] = best_acc
 
-        torch.save(OrderedDict([('acc',acc),('cr', cr)]), 'test.pth')
-        print(cr)
-        print(acc)
+    torch.save(OrderedDict([('acc',acc),('cr', cr)]), 'test.pth')
+    print(cr)
+    print(acc)
 
-        return
+    return
 
     # Train and val
 
@@ -327,7 +327,7 @@ def show_low_rank(model, input_size=None, criterion=None):
     if input_size is not None:
         if isinstance(input_size, int):
             input_size = [input_size, input_size]
-	elif isinstance(input_size, list):
+        elif isinstance(input_size, list):
             pass
         else:
             raise Exception
