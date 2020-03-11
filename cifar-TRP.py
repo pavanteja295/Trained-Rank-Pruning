@@ -248,7 +248,7 @@ def main():
 
         for i, t in enumerate(thresholds):
             test_model = torch.load(model_path)        
-
+            print('=====================================Threshold is', t)
             cr[i], channs_ = show_low_rank(test_model, look_up_table, input_size=[32, 32], criterion=sigma_criterion(t), type=args.type)
             all_channs_.append(channs_)
             test_model = f_decouple(test_model, look_up_table, criterion=sigma_criterion(t), train=False)
