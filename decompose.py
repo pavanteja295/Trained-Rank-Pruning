@@ -343,6 +343,7 @@ def VH_decompose_model(model_in, look_up_table, criterion, train=True, lambda_=0
                     subgradient = subgradient.contiguous().view(dim[1], dim[2], dim[0], dim[3]).permute(2, 0, 1, 3)
                     #print(sigma)
                 else:
+                    # all are reduced based on a condition
                     valid_idx = criterion(sigma)
                     V = V[:, :valid_idx].contiguous()
                     sigma = sigma[:valid_idx]

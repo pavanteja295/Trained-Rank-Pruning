@@ -177,6 +177,7 @@ def main():
     else:
         model = models.__dict__[args.arch](num_classes=num_classes)
 
+    # import pdb; pdb.set_trace()
     # model = torch.nn.DataParallel(model).cuda()
     # model = model.cuda(torch.device('cuda:1'))
     model = model.cuda()
@@ -214,20 +215,22 @@ def main():
         show_low_rank(model, input_size=[32, 32])
 
     print(' Start decomposition:')
+    # import pdb; pdb.set_trace()
     look_up_table = get_look_up_table(model)
 	#print(model)
-    thresholds = [0.85]#+0.03*x for x in range(10)]
+    thresholds = np.arange(0.1, 1.0, 0.01).tolist()#+0.03*x for x in range(10)]
     T = np.array(thresholds)
     cr = np.zeros(T.shape)
     acc = np.zeros(T.shape)
-    
+    all_channs_  = []
     model_path = 'net.pth'
     torch.save(model, model_path)
 
     for i, t in enumerate(thresholds):
         test_model = torch.load(model_path)        
 
-        cr[i] = show_low_rank(test_model, input_size=[32, 32], criterion=EnergyThreshold(t))
+        cr[i], channs_ = show_low_rank(test_model, input_size=[32, 32], criterion=EnergyThreshold(t))
+        all_channs_.append(channs_)
         test_model = f_decouple(test_model, look_up_table,
                     criterion=EnergyThreshold(t),train=False)
 	    #print(model)
@@ -265,6 +268,7 @@ def main():
     torch.save(OrderedDict([('acc',acc),('cr', cr)]), 'test.pth')
     print(cr)
     print(acc)
+    print(all_channs_)
 
     return
 
@@ -335,17 +339,20 @@ def show_low_rank(model, input_size=None, criterion=None):
     origin_FLOPs = 0.
     decouple_FLOPs = 0.
 
+    channels_ = []
     for name, m in model.named_modules():
 
         if not isinstance(m, nn.Conv2d):
             continue
-
+        # the original weight values
         p = m.weight.data
         dim = p.size()
+        # why? this is an approx for just one image crop
         FLOPs = dim[0]*dim[1]*dim[2]*dim[3]
 
+        # very strange only layers with stride one
         if name in look_up_table and m.stride == (1,1):
-
+            # out channels by everything out_chann x in_chann*kernel_size_1*kernel_size_2
             NC = p.view(dim[0], -1)
             N, sigma, C = torch.svd(NC, some=True)
             #VH = p.permute(1,2,0,3).contiguous().view(dim[1]*dim[2],-1)
@@ -357,6 +364,7 @@ def show_low_rank(model, input_size=None, criterion=None):
             if criterion is not None:
                 item_num = criterion(sigma)
                 print(item_num)
+                channels_.append(item_num)
                 # lambda_ = (sigma**2).data
                 # sum_e = lambda_.sum()
                 # invalid = float(((sigma**2).data < threshold).sum())
@@ -394,7 +402,7 @@ def show_low_rank(model, input_size=None, criterion=None):
         print('comp rate:')
         print(r)
 
-        return r
+        return r, channels_
              
 
 def train(trainloader, model, criterion, optimizer, epoch, use_cuda):
@@ -425,9 +433,9 @@ def train(trainloader, model, criterion, optimizer, epoch, use_cuda):
 
         # measure accuracy and record loss
         prec1, prec5 = accuracy(outputs.data, targets.data, topk=(1, 5))
-        losses.update(loss.data[0], inputs.size(0))
-        top1.update(prec1[0], inputs.size(0))
-        top5.update(prec5[0], inputs.size(0))
+        losses.update(loss.item(), inputs.size(0))
+        top1.update(prec1.item(), inputs.size(0))
+        top5.update(prec5.item(), inputs.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -493,17 +501,18 @@ def test(testloader, model, criterion, epoch, use_cuda):
 
         if use_cuda:
             inputs, targets = inputs.cuda(), targets.cuda()
-        inputs, targets = torch.autograd.Variable(inputs, volatile=True), torch.autograd.Variable(targets)
+        with torch.no_grad():
+            inputs, targets = torch.autograd.Variable(inputs), torch.autograd.Variable(targets)
 
-        # compute output
-        outputs = model(inputs)
-        loss = criterion(outputs, targets)
-
+            # compute output
+            outputs = model(inputs)
+            loss = criterion(outputs, targets)
+        # import pdb; pdb.set_trace()
         # measure accuracy and record loss
         prec1, prec5 = accuracy(outputs.data, targets.data, topk=(1, 5))
-        losses.update(loss.data[0], inputs.size(0))
-        top1.update(prec1[0], inputs.size(0))
-        top5.update(prec5[0], inputs.size(0))
+        losses.update(loss.item(), inputs.size(0))
+        top1.update(prec1.item(), inputs.size(0))
+        top5.update(prec5.item(), inputs.size(0))
 
         # measure elapsed time
         batch_time.update(time.time() - end)
