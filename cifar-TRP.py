@@ -269,6 +269,7 @@ def main():
         print(cr)
         print('accuracy:')
         print(acc)
+        print(all_channs_)
 
         return
 
