@@ -202,6 +202,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay)
 
+    
     # Resume
     title = 'cifar-10-' + args.arch
     if args.resume:
@@ -219,7 +220,8 @@ def main():
         logger = Logger(os.path.join(args.checkpoint, 'log.txt'), title=title)
         logger.set_names(['Learning Rate', 'Train Loss', 'Valid Loss', 'Train Acc.', 'Valid Acc.'])
 
-
+    print(model)
+    import pdb; pdb.set_trace()
     look_up_table = get_look_up_table(model)
     if args.evaluate:
         print('\nEvaluation only')
@@ -233,7 +235,8 @@ def main():
         print(' Start decomposition:')
 
         # set different threshold for model compression and test accuracy
-        thresholds = [5e-2] if args.type != 'ND' else [0.85]
+        all_channs_  = []
+        thresholds =  np.arange(0.1, 1.0, 0.01).tolist() #[5e-2] if args.type != 'ND' else [0.85]
         sigma_criterion = ValueThreshold if args.type != 'ND' else EnergyThreshold
         T = np.array(thresholds)
         cr = np.zeros(T.shape)
@@ -246,7 +249,8 @@ def main():
         for i, t in enumerate(thresholds):
             test_model = torch.load(model_path)        
 
-            cr[i] = show_low_rank(test_model, look_up_table, input_size=[32, 32], criterion=sigma_criterion(t), type=args.type)
+            cr[i], channs_ = show_low_rank(test_model, look_up_table, input_size=[32, 32], criterion=sigma_criterion(t), type=args.type)
+            all_channs_.append(channs_)
             test_model = f_decouple(test_model, look_up_table, criterion=sigma_criterion(t), train=False)
             #print(model)
             print(' Done! test decoupled model')
@@ -357,6 +361,8 @@ def show_low_rank(model, look_up_table=[], input_size=None, criterion=None, type
     origin_FLOPs = 0.
     decouple_FLOPs = 0.
 
+    channels_ = []
+
     for name, m in model.named_modules():
 
         if not isinstance(m, nn.Conv2d):
@@ -372,6 +378,8 @@ def show_low_rank(model, look_up_table=[], input_size=None, criterion=None, type
                 NC = p.view(dim[0], -1)
                 N, sigma, C = torch.svd(NC, some=True)
                 item_num = criterion(sigma)
+                print(item_num)
+                channels_.append(item_num)
                 new_FLOPs = dim[1]*dim[2]*dim[3]*item_num + item_num*dim[0]
             elif type == 'VH':
                 VH = p.permute(1,2,0,3).contiguous().view(dim[1]*dim[2],-1)
@@ -412,7 +420,7 @@ def show_low_rank(model, look_up_table=[], input_size=None, criterion=None, type
         print('comp rate:')
         print(r)
 
-    return r
+    return r,channels_
 
 def low_rank_approx(model, look_up_table, criterion, use_trp, type='NC'):
     dict2 = model.state_dict()
