@@ -218,7 +218,7 @@ def main():
     # import pdb; pdb.set_trace()
     look_up_table = get_look_up_table(model)
 	#print(model)
-    thresholds = [0.85]#np.arange(0.1, 1.0, 0.01).tolist()#+0.03*x for x in range(10)]
+    thresholds = [0.90]#np.arange(0.1, 1.0, 0.01).tolist()#+0.03*x for x in range(10)]
     T = np.array(thresholds)
     cr = np.zeros(T.shape)
     acc = np.zeros(T.shape)
