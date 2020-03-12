@@ -212,7 +212,7 @@ def network_decouple(model_in, look_up_table, criterion, train=True, lambda_=0.0
 
     return model_in.cuda()
 
-def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.0003, truncate=None):
+def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.0003, truncate=None, dont_decouple=True):
     '''
     decouple a input pre-trained model under nuclear regularization
     with singular value decomposition
@@ -254,9 +254,9 @@ def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.
                 # remain large singular value
                 if not train:
                     valid_idx = criterion(sigma)
-                    N = N[:, :valid_idx].contiguous()
-                    sigma = sigma[:valid_idx]
-                    C = C[:valid_idx, :]
+                    N = N[:, :valid_idx].contiguous() # N is channels x R
+                    sigma = sigma[:valid_idx] # R
+                    C = C[:valid_idx, :] #  R X remaining
                 else:
                     subgradient = torch.mm(N, C)
                     subgradient = subgradient.contiguous().view(dim[0],dim[1],dim[2],dim[3])
@@ -273,29 +273,36 @@ def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.
                 C = torch.mm(torch.diag(torch.sqrt(sigma)), C)
                 N = torch.mm(N,torch.diag(torch.sqrt(sigma)))
 
-                C = C.view(r,dim[1],dim[2], dim[3])
-                N = N.view(dim[0], r, 1, 1)
+                # can this network be not divided but still retain the accuracy ? 
+                if dont_decouple :
+                    NC_new = N @ C
+                    NC_new = NC_new.view(dim_y[0], dim[1],dim[2], dim[3])
+                    m.weight = nn.Parameter(torch.zeros_like(NC_new))
 
-                new_m = nn.Sequential(
-                    OrderedDict([
-                        ('C', nn.Conv2d(dim[1], r, dim[2], 1, 1, bias=False)),
-                        ('N', nn.Conv2d(r, dim[0], 1, 1, 0, bias=hasb))
-                    ])
-                )
-        
-             
-                state_dict = new_m.state_dict()
-                print(name+'.C.weight'+' <-- '+name+'.weight')
-                state_dict['C.weight'].copy_(C)
-                print(name + '.N.weight' + ' <-- ' + name + '.weight')
+                else:
+                    C = C.view(r,dim[1],dim[2], dim[3])
+                    N = N.view(dim[0], r, 1, 1)
 
-                state_dict['N.weight'].copy_(N)
-                if hasb:
-                    print(name+'.N.bias'+' <-- '+name+'.bias')
-                    state_dict['N.bias'].copy_(b)
+                    new_m = nn.Sequential(
+                        OrderedDict([
+                            ('C', nn.Conv2d(dim[1], r, dim[2], 1, 1, bias=False)),
+                            ('N', nn.Conv2d(r, dim[0], 1, 1, 0, bias=hasb))
+                        ])
+                    )
+            
+                
+                        state_dict = new_m.state_dict()
+                        print(name+'.C.weight'+' <-- '+name+'.weight')
+                        state_dict['C.weight'].copy_(C)
+                        print(name + '.N.weight' + ' <-- ' + name + '.weight')
 
-                new_m.load_state_dict(state_dict)
-                _set_model_attr(name, att=model_in, obj=new_m)
+                        state_dict['N.weight'].copy_(N)
+                        if hasb:
+                            print(name+'.N.bias'+' <-- '+name+'.bias')
+                            state_dict['N.bias'].copy_(b)
+
+                    new_m.load_state_dict(state_dict)
+                    _set_model_attr(name, att=model_in, obj=new_m)
 
     return model_in.cuda()
 
