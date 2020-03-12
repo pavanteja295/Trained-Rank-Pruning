@@ -291,15 +291,15 @@ def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.
                     )
             
                 
-                        state_dict = new_m.state_dict()
-                        print(name+'.C.weight'+' <-- '+name+'.weight')
-                        state_dict['C.weight'].copy_(C)
-                        print(name + '.N.weight' + ' <-- ' + name + '.weight')
+                    state_dict = new_m.state_dict()
+                    print(name+'.C.weight'+' <-- '+name+'.weight')
+                    state_dict['C.weight'].copy_(C)
+                    print(name + '.N.weight' + ' <-- ' + name + '.weight')
 
-                        state_dict['N.weight'].copy_(N)
-                        if hasb:
-                            print(name+'.N.bias'+' <-- '+name+'.bias')
-                            state_dict['N.bias'].copy_(b)
+                    state_dict['N.weight'].copy_(N)
+                    if hasb:
+                        print(name+'.N.bias'+' <-- '+name+'.bias')
+                        state_dict['N.bias'].copy_(b)
 
                     new_m.load_state_dict(state_dict)
                     _set_model_attr(name, att=model_in, obj=new_m)
