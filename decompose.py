@@ -228,6 +228,7 @@ def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.
     :param lambda_: float, weight for regularization term, only valid when train is True
     :return: model_out: a new nn.Module object initialized with a decoupled model
     '''
+    import pdb; pdb.set_trace()
     if train:
         model_in.train()
     else:
