@@ -275,10 +275,11 @@ def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.
 
                 # can this network be not divided but still retain the accuracy ? 
                 if dont_decouple :
+                    print(f'Reconstructing from sizes {N.size(), C.size()} but initial size is {NC.size()} ')
                     NC_new = N @ C
                     NC_new = NC_new.view(dim[0], dim[1],dim[2], dim[3])
-                    m.weight = nn.Parameter(torch.zeros_like(NC_new))
-                    print('filled all zeros')
+                    m.weight = nn.Parameter(NC_new)
+                    # print('filled all zeros')
 
                 else:
                     C = C.view(r,dim[1],dim[2], dim[3])
