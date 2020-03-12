@@ -305,7 +305,7 @@ def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.
 
                     new_m.load_state_dict(state_dict)
                     _set_model_attr(name, att=model_in, obj=new_m)
-    print(model_in.layer1[0].conv1.weight)
+    # print(model_in.layer1[0].conv1.weight)
     return model_in.cuda()
 
 
