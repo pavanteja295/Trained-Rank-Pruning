@@ -277,7 +277,7 @@ def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.
                 if dont_decouple :
                     NC_new = N @ C
                     NC_new = NC_new.view(dim[0], dim[1],dim[2], dim[3])
-                    m.weight = nn.Parameter(torch.zeros_like(NC_new))
+                    m.weight = nn.Parameter(NC_new)
 
                 else:
                     C = C.view(r,dim[1],dim[2], dim[3])
@@ -303,7 +303,7 @@ def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.
 
                     new_m.load_state_dict(state_dict)
                     _set_model_attr(name, att=model_in, obj=new_m)
-    
+
     return model_in.cuda()
 
 
