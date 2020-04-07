@@ -205,6 +205,7 @@ def main():
     
     # Resume
     title = 'cifar-10-' + args.arch
+    
     if args.resume:
         # Load checkpoint.
         print('==> Resuming from checkpoint..')
@@ -219,9 +220,8 @@ def main():
     else:
         logger = Logger(os.path.join(args.checkpoint, 'log.txt'), title=title)
         logger.set_names(['Learning Rate', 'Train Loss', 'Valid Loss', 'Train Acc.', 'Valid Acc.'])
-
-    print(model)
     import pdb; pdb.set_trace()
+    print(model)
     look_up_table = get_look_up_table(model)
     if args.evaluate:
         print('\nEvaluation only')
@@ -471,6 +471,7 @@ def low_rank_approx(model, look_up_table, criterion, use_trp, type='NC'):
                         new_NC = (N.mm(dia)).mm(C)
                         new_NC = new_NC.contiguous().view(dim[0], dim[1], dim[2], dim[3])
                         dict2[name].copy_(new_NC)
+                    # this the gradient step
                     subgradient = torch.mm(N, C)
                     subgradient = subgradient.contiguous().view(dim[0], dim[1], dim[2], dim[3])
                     sub[model_name] = subgradient

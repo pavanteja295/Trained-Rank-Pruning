@@ -252,8 +252,11 @@ def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.
                 C = C.t()
                 # remain large singular value
                 if not train:
+                    import pdb; pdb.set_trace()
                     valid_idx = criterion(sigma)
+                    size = min(NC.shape)
                     N = N[:, :valid_idx].contiguous() # N is channels x R
+                    
                     sigma = sigma[:valid_idx] # R
                     C = C[:valid_idx, :] #  R X remaining
                 else:
@@ -278,6 +281,7 @@ def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.
                     NC_new = N @ C
                     NC_new = NC_new.view(dim[0], dim[1],dim[2], dim[3])
                     m.weight = nn.Parameter(NC_new)
+                    
                     # print('filled all zeros')
 
                 else:
