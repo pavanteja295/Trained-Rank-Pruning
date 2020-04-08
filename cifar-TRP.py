@@ -443,7 +443,7 @@ def low_rank_approx(model, look_up_table, criterion, use_trp, type='NC'):
     for name in dict2:
         param = dict2[name]
         dim = param.size()
-        print(name)
+        
         model_name = name[:-7] if len(dim) == 4 else ''
         
         if len(dim) == 4 and model_name in look_up_table:
