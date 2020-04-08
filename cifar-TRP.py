@@ -220,7 +220,7 @@ def main():
     else:
         logger = Logger(os.path.join(args.checkpoint, 'log.txt'), title=title)
         logger.set_names(['Learning Rate', 'Train Loss', 'Valid Loss', 'Train Acc.', 'Valid Acc.'])
-    import pdb; pdb.set_trace()
+
     print(model)
     look_up_table = get_look_up_table(model)
     if args.evaluate:
