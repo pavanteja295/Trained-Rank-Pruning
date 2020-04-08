@@ -18,6 +18,7 @@ import torch.utils.data as data
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import models.cifar as models
+from torch.utils.tensorboard import SummaryWriter
 
 from collections import OrderedDict
 import numpy as np
@@ -124,6 +125,10 @@ else:
     raise NotImplementedError('no such decouple type %s' % args.type)
 
 def main():
+    chkpoint_name = args.checkpoint[args.checkpoint.rfind('/') + 1 :]
+    # import pdb; pdb.set_trace()
+    global writer
+    writer = SummaryWriter(log_dir='/runs/' + chkpoint_name)
     global best_acc
     start_epoch = args.start_epoch  # start from epoch 0 or last checkpoint epoch
 
@@ -156,6 +161,8 @@ def main():
 
     testset = dataloader(root='./data', train=False, download=False, transform=transform_test)
     testloader = data.DataLoader(testset, batch_size=args.test_batch, shuffle=False, num_workers=args.workers)
+
+    # writer = 
 
     # Model
     print("==> creating model '{}'".format(args.arch))
@@ -220,7 +227,6 @@ def main():
     else:
         logger = Logger(os.path.join(args.checkpoint, 'log.txt'), title=title)
         logger.set_names(['Learning Rate', 'Train Loss', 'Valid Loss', 'Train Acc.', 'Valid Acc.'])
-
     print(model)
     look_up_table = get_look_up_table(model)
     if args.evaluate:
@@ -552,6 +558,8 @@ def train(trainloader, model, criterion, optimizer, look_up_table, epoch, use_cu
         top1.update(prec1.item(), inputs.size(0))
         top5.update(prec5.item(), inputs.size(0))
 
+        writer.add_scalar('Loss/train', losses.avg)
+        writer.add_scalar('Accuracy/train', top1.avg)
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
@@ -612,6 +620,9 @@ def test(testloader, model, criterion, epoch, use_cuda):
         losses.update(loss.item(), inputs.size(0))
         top1.update(prec1.item(), inputs.size(0))
         top5.update(prec5.item(), inputs.size(0))
+
+        writer.add_scalar('Loss/test', losses.avg)
+        writer.add_scalar('Accuracy/test', top1.avg)
 
         # measure elapsed time
         batch_time.update(time.time() - end)
