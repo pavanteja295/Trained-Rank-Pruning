@@ -86,7 +86,7 @@ parser.add_argument('--trp', dest='trp', help='set this option to enable TRP dur
 parser.add_argument('--type', type=str, help='the type of decouple', choices=['NC','VH','ND'], default='NC')
 parser.add_argument('--nuclear-weight', type=float, default=None, help='The weight for nuclear norm regularization')
 parser.add_argument('--retrain', dest='retrain',help='wether retrain from a decoupled model, only valid when evaluation is on', action='store_true')
-
+parser.add_argument('--stride_1_only', dest='stride_1_only', help='stride_1_opnly', action='store_true')
 args = parser.parse_args()
 state = {k: v for k, v in args._get_kwargs()}
 print(state)
@@ -251,7 +251,7 @@ def main():
             print('=====================================Threshold is', t)
             cr[i], channs_ = show_low_rank(test_model, look_up_table, input_size=[32, 32], criterion=sigma_criterion(t), type=args.type)
             all_channs_.append(channs_)
-            test_model = f_decouple(test_model, look_up_table, criterion=sigma_criterion(t), train=False)
+            test_model = f_decouple(test_model, look_up_table, criterion=sigma_criterion(t), train=False, stride_1_only=args.stride_1_only)
             #print(model)
             print(' Done! test decoupled model')
             test_loss, test_acc = test(testloader, test_model, criterion, start_epoch, use_cuda)
@@ -328,9 +328,10 @@ def get_look_up_table(model):
     count = 0
     look_up_table = []
     First_conv = True
+    # check why only few layers are filtered?
     for name, m in model.named_modules():
         #TODO: change the if condition here to select different kernel to decouple
-        if isinstance(m, nn.Conv2d) and m.kernel_size != (1,1) and count > 0:
+        if isinstance(m, nn.Conv2d): #and m.kernel_size != (1,1) and count > 0:
             if First_conv:
                 First_conv = False
             else:
@@ -373,7 +374,10 @@ def show_low_rank(model, look_up_table=[], input_size=None, criterion=None, type
         dim = p.size()
         FLOPs = dim[0]*dim[1]*dim[2]*dim[3]
 
-        if name in look_up_table and m.stride == (1,1):
+        if name in look_up_table:
+            if args.stride_1_only: 
+                if not m.stride == (1,1):
+                    continue
 
             if type == 'NC':
                 NC = p.view(dim[0], -1)

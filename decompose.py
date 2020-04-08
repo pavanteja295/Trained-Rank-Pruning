@@ -212,7 +212,7 @@ def network_decouple(model_in, look_up_table, criterion, train=True, lambda_=0.0
 
     return model_in.cuda()
 
-def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.0003, truncate=None, dont_decouple=True):
+def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.0003, truncate=None, dont_decouple=True, stride_1_only=True):
     '''
     decouple a input pre-trained model under nuclear regularization
     with singular value decomposition
@@ -252,7 +252,6 @@ def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.
                 C = C.t()
                 # remain large singular value
                 if not train:
-                    import pdb; pdb.set_trace()
                     valid_idx = criterion(sigma)
                     size = min(NC.shape)
                     N = N[:, :valid_idx].contiguous() # N is channels x R
@@ -270,7 +269,11 @@ def channel_decompose(model_in, look_up_table, criterion, train=True, lambda_=0.
 
             if train:
                 m.weight.grad.data.add_(lambda_ * subgradient)
-            elif m.stride == (1, 1):  # when decoupling, only conv with 1x1 stride is considered
+            else:
+                if stride_1_only: 
+                   if  not m.stride == (1, 1):  # when decoupling, only conv with 1x1 stride is considered
+                    continue
+
                 r = int(sigma.size(0))
                 C = torch.mm(torch.diag(torch.sqrt(sigma)), C)
                 N = torch.mm(N,torch.diag(torch.sqrt(sigma)))
