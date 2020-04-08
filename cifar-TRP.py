@@ -228,7 +228,9 @@ def main():
         logger = Logger(os.path.join(args.checkpoint, 'log.txt'), title=title)
         logger.set_names(['Learning Rate', 'Train Loss', 'Valid Loss', 'Train Acc.', 'Valid Acc.'])
     print(model)
+    
     look_up_table = get_look_up_table(model)
+
     if args.evaluate:
         print('\nEvaluation only')
         test_loss, test_acc = test(testloader, model, criterion, start_epoch, use_cuda)
@@ -382,6 +384,7 @@ def show_low_rank(model, look_up_table=[], input_size=None, criterion=None, type
 
         if name in look_up_table:
             if args.stride_1_only: 
+                print('Skipping those not with stride 1')
                 if not m.stride == (1,1):
                     continue
 
@@ -440,8 +443,9 @@ def low_rank_approx(model, look_up_table, criterion, use_trp, type='NC'):
     for name in dict2:
         param = dict2[name]
         dim = param.size()
+        print(name)
         model_name = name[:-7] if len(dim) == 4 else ''
-
+        
         if len(dim) == 4 and model_name in look_up_table:
             if type=='VH':
                 VH = param.permute(1, 2, 0, 3).contiguous().view(dim[1]*dim[2], -1)
