@@ -217,7 +217,7 @@ def main():
 
     print(' Start decomposition:')
     # import pdb; pdb.set_trace()
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
     look_up_table = get_look_up_table(model)
 	#print(model)
     thresholds = [0.95] #np.arange(0.1, 1.0, 0.01).tolist()#+0.03*x for x in range(10)]
@@ -311,7 +311,7 @@ def get_look_up_table(model):
     First_conv = True
     for name, m in model.named_modules():
         #TODO: change the if condition here to select different kernel to decouple
-        if isinstance(m, nn.Conv2d) and m.kernel_size != (1,1) and count > 0:
+        if isinstance(m, nn.Conv2d): #and m.kernel_size != (1,1) and count > 0:
             if First_conv:
                 First_conv = False
             else:
