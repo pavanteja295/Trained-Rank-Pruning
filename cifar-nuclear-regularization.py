@@ -352,7 +352,11 @@ def show_low_rank(model, input_size=None, criterion=None):
         FLOPs = dim[0]*dim[1]*dim[2]*dim[3]
 
         # very strange only layers with stride one
-        if name in look_up_table and m.stride == (1,1):
+        if name in look_up_table:
+            if args.stride_1_only: 
+                print('Skipping those not with stride 1')
+                if not m.stride == (1,1):
+                    continue
             # out channels by everything out_chann x in_chann*kernel_size_1*kernel_size_2
             NC = p.view(dim[0], -1)
             N, sigma, C = torch.svd(NC, some=True)
