@@ -217,6 +217,7 @@ def main():
 
     print(' Start decomposition:')
     # import pdb; pdb.set_trace()
+    import pdb; pdb.set_trace()
     look_up_table = get_look_up_table(model)
 	#print(model)
     thresholds = [0.95] #np.arange(0.1, 1.0, 0.01).tolist()#+0.03*x for x in range(10)]
@@ -352,6 +353,7 @@ def show_low_rank(model, input_size=None, criterion=None):
         FLOPs = dim[0]*dim[1]*dim[2]*dim[3]
 
         # very strange only layers with stride one
+
         if name in look_up_table:
             if args.stride_1_only: 
                 print('Skipping those not with stride 1')
