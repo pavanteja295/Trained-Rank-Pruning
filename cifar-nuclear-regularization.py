@@ -308,7 +308,7 @@ def main():
 def get_look_up_table(model):
     count = 0
     look_up_table = []
-    First_conv = True
+    First_conv = False
     for name, m in model.named_modules():
         #TODO: change the if condition here to select different kernel to decouple
         if isinstance(m, nn.Conv2d): #and m.kernel_size != (1,1) and count > 0:

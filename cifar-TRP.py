@@ -335,7 +335,7 @@ def model_retrain(finetune_epoch, test_model, trainloader, testloader, criterion
 def get_look_up_table(model):
     count = 0
     look_up_table = []
-    First_conv = True
+    First_conv = False
     # check why only few layers are filtered?
     for name, m in model.named_modules():
         #TODO: change the if condition here to select different kernel to decouple
