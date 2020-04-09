@@ -83,6 +83,7 @@ parser.add_argument('--gpu-id', default='0', type=str,
 #decouple options
 parser.add_argument('--nuclear-weight', type=float, default=None, help='The weight for nuclear norm regularization')
 parser.add_argument('--retrain', dest='retrain',help='wether retrain from a decoupled model, only valid when evaluation is on', action='store_true')
+parser.add_argument('--stride_1_only', dest='stride_1_only', help='stride_1_opnly', action='store_true')
 
 args = parser.parse_args()
 state = {k: v for k, v in args._get_kwargs()}
@@ -232,7 +233,7 @@ def main():
         cr[i], channs_ = show_low_rank(test_model, input_size=[32, 32], criterion=EnergyThreshold(t))
         all_channs_.append(channs_)
         test_model = f_decouple(test_model, look_up_table,
-                    criterion=EnergyThreshold(t),train=False)
+                    criterion=EnergyThreshold(t),train=False, stride_1_only=args.stride_1_only)
 	    #print(model)
         print(' Done! test decoupled model')
         test_loss, test_acc = test(testloader, test_model, criterion, start_epoch, use_cuda)
