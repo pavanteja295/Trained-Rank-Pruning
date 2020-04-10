@@ -229,6 +229,7 @@ def main():
         logger.set_names(['Learning Rate', 'Train Loss', 'Valid Loss', 'Train Acc.', 'Valid Acc.'])
     print(model)
     
+    import pdb; pdb.set_trace()
     look_up_table = get_look_up_table(model)
 
     if args.evaluate:
